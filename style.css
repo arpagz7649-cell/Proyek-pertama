@@ -1,74 +1,31 @@
-/* STYLE UNTUK MATA MINUS 
-   Tombol dibuat besar dan warna kontras tinggi 
-*/
+/* BIAR SISTEM PEKA TERHADAP SENTUHAN JEMPOL */
+
+button, input[type="range"] {
+    /* Langsung respon pas disentuh, gak pake nunggu */
+    touch-action: manipulation; 
+    
+    /* Biar nggak muncul kotak biru aneh pas ditekan */
+    -webkit-tap-highlight-color: transparent; 
+}
 
 body {
-    background-color: #000000; /* Hitam pekat biar mata gak silau */
-    color: #ffffff;
-    font-family: Arial, sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    margin: 0;
+    /* Biar tulisan di web gak bisa ke-blok pas lu lagi edit video */
+    user-select: none;
+    -webkit-user-select: none;
+    
+    /* Biar layar gak goyang-goyang pas lu geser slider */
+    overflow-x: hidden;
+    overscroll-behavior-y: contain;
 }
 
-h2 {
-    color: #00ff00; /* Hijau terang biar kelihatan jelas */
-    font-size: 28px;
+/* AREA SENTUH SLIDER DIBUAT GEDE */
+input[type="range"] {
+    height: 60px; /* Makin tinggi makin gampang kena jempol */
 }
 
-/* LAYAR UTAMA VIDEO */
-canvas {
-    border: 5px solid #444;
-    border-radius: 15px;
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 20px;
-    box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
-}
-
-/* WADAH TOMBOL (PANEL) */
-.panel-kontrol {
-    background-color: #1a1a1a;
-    width: 95%;
-    max-width: 600px;
-    padding: 25px;
-    border-radius: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px; /* Jarak antar tombol biar gak kepencet */
-}
-
-/* LABEL TULISAN */
-label {
-    font-size: 18px; /* Tulisan gede biar kebaca */
-    font-weight: bold;
-    color: #00ccff;
-}
-
-/* INPUT FILE & SLIDER */
-input[type="file"], input[type="range"] {
-    width: 100%;
-    height: 50px; /* Dibuat tinggi biar gampang disentuh di HP */
-    cursor: pointer;
-}
-
-/* TOMBOL SIMPAN (Paling Penting) */
-button {
-    background-color: #ff0055;
-    color: white;
-    font-size: 22px; /* Font ekstra besar */
-    font-weight: bold;
-    padding: 20px;
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 5px 0 #990033;
-    transition: 0.1s;
-}
-
+/* EFEK PAS TOMBOL DITEKAN (VISUAL FEEDBACK) */
 button:active {
-    transform: translateY(4px);
-    box-shadow: none;
+    background-color: #00ff00; /* Berubah jadi hijau pas ditekan */
+    color: #000;
+    filter: brightness(1.2);
 }
-
