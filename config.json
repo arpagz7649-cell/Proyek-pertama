@@ -1,0 +1,21 @@
+{
+  "project_info": {
+    "name": "Green Screen Editor Mobile",
+    "version": "1.0.0",
+    "developer": "Lu Sendiri",
+    "device_optimization": "High"
+  },
+  "editor_settings": {
+    "default_threshold": 110,
+    "chroma_color": "green",
+    "auto_save": true,
+    "output_format": "png",
+    "resolution_limit": "1080p"
+  },
+  "ui_theme": {
+    "mode": "dark",
+    "accent_color": "#00ccff",
+    "font_size": "20px"
+  }
+}
+
