@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Green Screen Editor Pro</title>
+    <style>
+        body{background:#111;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px}
+        canvas{border:2px solid #444;max-width:100%;height:auto;background:url('https://www.transparenttextures.com/patterns/carbon-fibre.png')}
+        .controls{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#222;padding:15px;border-radius:10px}
+        input[type="range"]{width:100%}
+        button{padding:10px;background:#07f;color:#fff;border:none;border-radius:5px;cursor:pointer}
+    </style>
+</head>
+<body>
+
+    <h2>Green Screen Processor</h2>
+    
+    <canvas id="outputCanvas"></canvas>
+
+    <div class="controls">
+        <label>Sensitivitas Hijau:</label>
+        <input type="range" id="threshold" min="0" max="255" value="100">
+        
+        <label>Kehalusan Tepi:</label>
+        <input type="range" id="softness" min="0" max="100" value="10">
+        
+        <input type="file" id="videoUpload" accept="video/*">
+        <button id="downloadBtn">Download Foto (Frame Sekarang)</button>
+    </div>
+
+    <video id="vSource" loop muted playsinline style="display:none"></video>
+
+    <script>
+        const video = document.getElementById('vSource');
+        const canvas = document.getElementById('outputCanvas');
+        const ctx = canvas.getContext('2d', {willReadFrequently: true});
+        const thresholdInput = document.getElementById('threshold');
+        const softnessInput = document.getElementById('softness');
+        const fileInput = document.getElementById('videoUpload');
+
+        // 1. Handle Upload Video
+        fileInput.onchange = (e) => {
+            const file = e.target.files[0];
+            video.src = URL.createObjectURL(file);
+            video.play();
+        };
+
+        // 2. Fungsi Utama Pemrosesan Pixel (Chroma Key)
+        function processFrame() {
+            if (video.paused || video.ended) {
+                requestAnimationFrame(processFrame);
+                return;
+            }
+
+            // Set ukuran canvas sama dengan video
+            if (canvas.width !== video.videoWidth) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+            }
+
+            // Gambar frame video ke canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // Ambil data pixel
+            let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            let length = frame.data.length;
+
+            let threshold = thresholdInput.value;
+
+            // Loop setiap pixel (RGBA)
+            for (let i = 0; i < length; i += 4) {
+                let r = frame.data[i];
+                let g = frame.data[i + 1];
+                let b = frame.data[i + 2];
+
+                // Logika deteksi warna hijau:
+                // Jika warna hijau (g) jauh lebih dominan daripada merah (r) dan biru (b)
+                if (g > r && g > b && g > threshold) {
+                    frame.data[i + 3] = 0; // Set Alpha/Transparansi jadi 0 (hilang)
+                }
+            }
+
+            // Gambar balik pixel yang udah diedit ke canvas
+            ctx.putImageData(frame, 0, 0);
+            requestAnimationFrame(processFrame);
+        }
+
+        // Jalankan loop pemrosesan
+        video.addEventListener('play', () => {
+            processFrame();
+        });
+
+        // 3. Fungsi Download Hasil (Format Foto)
+        document.getElementById('downloadBtn').onclick = () => {
+            const link = document.createElement('a');
+            link.download = 'greenscreen_result.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        };
+    </script>
+</body>
+</html>
+
