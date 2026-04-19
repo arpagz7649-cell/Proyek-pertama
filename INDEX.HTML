@@ -3,28 +3,29 @@
 <head>
     <title>Green Screen Editor Pro</title>
     <style>
-        body{background:#111;color:#fff;font-family:sans-serif;display:flex;flex-direction:column;align-items:center;padding:20px}
-        canvas{border:2px solid #444;max-width:100%;height:auto;background:url('https://www.transparenttextures.com/patterns/carbon-fibre.png')}
-        .controls{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:10px;background:#222;padding:15px;border-radius:10px}
-        input[type="range"]{width:100%}
-        button{padding:10px;background:#07f;color:#fff;border:none;border-radius:5px;cursor:pointer}
+        /* CSS buat ngatur tampilan biar rapi di HP */
+        body { background: #111; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        canvas { border: 2px solid #444; max-width: 100%; height: auto; background: #000; }
+        .controls { margin-top: 20px; display: grid; grid-template-columns: 1fr; gap: 10px; background: #222; padding: 15px; border-radius: 10px; width: 90%; }
+        input, button { width: 100%; padding: 10px; margin: 5px 0; }
+        label { font-size: 12px; color: #aaa; }
     </style>
 </head>
-<body>
-
-    <h2>Green Screen Processor</h2>
+<body> <h2>Green Screen Processor</h2>
     
     <canvas id="outputCanvas"></canvas>
 
     <div class="controls">
+        <label>1. Pilih Video Green Screen:</label>
+        <input type="file" id="videoUpload" accept="video/*">
+
+        <label>2. Pilih Gambar Background:</label>
+        <input type="file" id="bgUpload" accept="image/*">
+        
         <label>Sensitivitas Hijau:</label>
         <input type="range" id="threshold" min="0" max="255" value="100">
         
-        <label>Kehalusan Tepi:</label>
-        <input type="range" id="softness" min="0" max="100" value="10">
-        
-        <input type="file" id="videoUpload" accept="video/*">
-        <button id="downloadBtn">Download Foto (Frame Sekarang)</button>
+        <button id="downloadBtn">Download Hasil (Foto)</button>
     </div>
 
     <video id="vSource" loop muted playsinline style="display:none"></video>
@@ -32,71 +33,86 @@
     <script>
         const video = document.getElementById('vSource');
         const canvas = document.getElementById('outputCanvas');
-        const ctx = canvas.getContext('2d', {willReadFrequently: true});
+        const ctx = canvas.getContext('2d');
         const thresholdInput = document.getElementById('threshold');
-        const softnessInput = document.getElementById('softness');
         const fileInput = document.getElementById('videoUpload');
+        const bgUpload = document.getElementById('bgUpload');
 
-        // 1. Handle Upload Video
+        // Objek buat nampung gambar background
+        const bgImage = new Image();
+
+        // Handle upload video
         fileInput.onchange = (e) => {
             const file = e.target.files[0];
             video.src = URL.createObjectURL(file);
             video.play();
         };
 
-        // 2. Fungsi Utama Pemrosesan Pixel (Chroma Key)
+        // Handle upload background (INI YANG BARU)
+        bgUpload.onchange = (e) => {
+            const file = e.target.files[0];
+            bgImage.src = URL.createObjectURL(file);
+        };
+
         function processFrame() {
             if (video.paused || video.ended) {
                 requestAnimationFrame(processFrame);
                 return;
             }
 
-            // Set ukuran canvas sama dengan video
             if (canvas.width !== video.videoWidth) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
             }
 
-            // Gambar frame video ke canvas
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            // LANGKAH 1: Gambar background dulu di paling bawah
+            if (bgImage.src) {
+                ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = "#000";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
 
-            // Ambil data pixel
-            let frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            // LANGKAH 2: Proses video green screen di canvas terpisah (memori)
+            let tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            let tempCtx = tempCanvas.getContext('2d');
+            
+            tempCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            let frame = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
             let length = frame.data.length;
-
             let threshold = thresholdInput.value;
 
-            // Loop setiap pixel (RGBA)
             for (let i = 0; i < length; i += 4) {
                 let r = frame.data[i];
                 let g = frame.data[i + 1];
                 let b = frame.data[i + 2];
 
-                // Logika deteksi warna hijau:
-                // Jika warna hijau (g) jauh lebih dominan daripada merah (r) dan biru (b)
+                // Kalau warna dominan hijau, bikin transparan
                 if (g > r && g > b && g > threshold) {
-                    frame.data[i + 3] = 0; // Set Alpha/Transparansi jadi 0 (hilang)
+                    frame.data[i + 3] = 0; 
                 }
             }
 
-            // Gambar balik pixel yang udah diedit ke canvas
-            ctx.putImageData(frame, 0, 0);
+            // LANGKAH 3: Tumpuk hasil video transparan ke atas background
+            tempCtx.putImageData(frame, 0, 0);
+            ctx.drawImage(tempCanvas, 0, 0);
+
             requestAnimationFrame(processFrame);
         }
 
-        // Jalankan loop pemrosesan
         video.addEventListener('play', () => {
             processFrame();
         });
 
-        // 3. Fungsi Download Hasil (Format Foto)
         document.getElementById('downloadBtn').onclick = () => {
             const link = document.createElement('a');
-            link.download = 'greenscreen_result.png';
+            link.download = 'hasil_edit.png';
             link.href = canvas.toDataURL();
             link.click();
         };
     </script>
-</body>
-</html>
+
+</body> </html>
 
